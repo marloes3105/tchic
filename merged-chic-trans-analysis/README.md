@@ -8,6 +8,8 @@ This notebook formats the chic count tables to make sure it has the same dimensi
 Scanpy supports plotting of different layers by adding the following argument: layer = 'x', where 'x' is 'spliced', 'unspliced' (for spliced/unspliced counts), 
 or one of the names of the added chic layers (default: 'k4_raw' and 'k27_raw', for raw counts of TSS tables from k4me3 and k27me3, respectively). 
 
+
+
 To be added: 
 1. A notebook showing various possible plotting options for all layers
 2. normalisation of chic TSS tables and addition of normalised chic data to the adata file.
