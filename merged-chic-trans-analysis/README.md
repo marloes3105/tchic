@@ -9,6 +9,7 @@ Scanpy supports plotting of different layers by adding the following argument: l
 or one of the names of the added chic layers (default: 'k4_raw' and 'k27_raw', for raw counts of TSS tables from k4me3 and k27me3, respectively). 
 
 
+<br/>
 
 To be added: 
 1. A notebook showing various possible plotting options for all layers
