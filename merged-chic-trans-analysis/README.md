@@ -9,8 +9,10 @@ Scanpy supports plotting of different layers by adding the following argument: l
 or one of the names of the added chic layers (default: 'k4_raw' and 'k27_raw', for raw counts of TSS tables from k4me3 and k27me3, respectively). 
 
 
+Various plotting examples for all layers (spliced, unspliced, chic histone presence) can be found in the notebook "plotsAdataWithChICLayers". This notebook requires the adata file produced by the "AddChICToAdataLayers" notebook as input file.
+
+
 <br/>
 
 To be added: 
-1. A notebook showing various possible plotting options for all layers
-2. normalisation of chic TSS tables and addition of normalised chic data to the adata file.
+- normalisation of chic TSS tables and addition of normalised chic data to the adata file.
