@@ -17,3 +17,7 @@ for file in *.bam; do echo "submission.py -y -time 3 -m 50 -t 2 -s ./cluster -sc
 
 #make cover plots for all bam files in the folder
 for file in *.bam; do echo "submission.py -y -time 3 -m 50 -t 2 -s ./cluster -sched slurm -N bin200 --nenv \"source activate condaP1;bamCoverage --binSize 200 --smoothLength 1000 --ignoreDuplicates --centerReads --normalizeUsing CPM -b $file -o $file.bw\"";done | sh
+
+
+
+
