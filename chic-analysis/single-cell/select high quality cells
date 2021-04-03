@@ -87,4 +87,4 @@ output[,1] <- c("bad")
 output[rownames(output) %in% rownames(good20),1]<-"good"
 
 #write table to be used for bamExtractSamples.py
-write.table(output, file='filename', quote=FALSE, sep='\t')
+write.table(output, file='filename', quote=FALSE, sep='\t', col.names = FALSE)
