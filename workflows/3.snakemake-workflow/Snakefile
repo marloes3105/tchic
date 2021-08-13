@@ -1,0 +1,128 @@
+import collections
+from glob import glob
+import pandas as pd
+
+"""
+This workflow starts with a merged chic bam file and aims to:
+- Split the bam file and filter out bad cells
+- Split the bam file into pseudobulk bam files
+- Then make celltype/cluster-specific bigwig files out of these to check coverage
+- Make count tables, e.g. for TSS coverage, gene body coverage etc.
+
+"""
+
+################## configuration ##################
+configfile: "config.json"
+
+# config
+clusters = pd.read_csv(config['clusters_csv'], sep='\t', index_col=0).iloc[:,0].unique()
+path_cl1 = 'processed/bigwigs/subset_' + str(clusters[1]) + '.bam'
+
+
+################## configuration end ##################
+rule all:
+    input:
+        expand("processed/merged_tagged_good.bam"),
+        expand("processed/subset_{cluster}.bw", cluster=clusters),
+        expand("processed/count_table_TSS.csv"),
+        expand("processed/count_table_geneBody.csv")
+
+
+################## start snakemake ##################
+
+# 1. Split bam file into good and bad - in other words, filter out bad cells
+rule split_good_bad:
+    input:
+        bamfile = config['input_bam'],
+        selector = config['cellSelection_output']
+    output:
+        good_bam = "processed/merged_tagged_good.bam",
+        bad_bam = "processed/merged_tagged_bad.bam"
+    log:
+        stdout="log/split_good_bad.stdout",
+        stderr="log/split_good_bad.stderr"
+    params: runtime="30h"
+    resources:
+        mem_mb=40000
+
+    shell:
+        "bamExtractSamples.py {input.bamfile} {input.selector} -o processed/merged_tagged_.bam > {log.stdout} 2> {log.stderr}"
+
+
+# 2. Split filtered bam file into separate files for each cell type
+rule split_clusters:
+    input:
+        bamfile = "processed/merged_tagged_good.bam",
+        selector = config['clusters_csv']
+    output:
+        clusters_bam = path_cl1
+    params: runtime="30h"
+    resources:
+        mem_mb=60000
+
+    shell:
+        "bamExtractSamples.py {input.bamfile} {input.selector} -o processed/bigwigs/subset_.bam" # > {log.stdout} 2> {log.stderr}"
+
+
+# 3. Make bigwig coverage files for each cell cluster bam file
+rule make_bigwigs:
+    input:
+        bam = path_cl1
+    output:
+        bw = "processed/bigwigs/subset_{cluster}.bw"
+    params:
+        runtime="30h",
+        binSize = config['binSize'],
+        bamfile = "processed/bigwigs/subset_{cluster}.bam",
+        bamindex = "processed/bigwigs/subset_{cluster}.bam.bai",
+        smoothLength = config['smoothLength'],
+        minMQ = config['minMQ']
+    log:
+        stdout="log/bigwig_{cluster}.stdout",
+        stderr="log/bigwig_{cluster}.stderr"
+    resources:
+        mem_mb=40000
+
+    shell:
+        "bamCoverage --ignoreDuplicates --binSize {params.binSize} --smoothLength {params.smoothLength} \
+        --minMappingQuality {params.minMQ} --centerReads --normalizeUsing CPM \
+        -b {params.bamfile} -o {output.bw} > {log.stdout} 2> {log.stderr}; rm {params.bamfile} {params.bamindex}"
+
+
+# 4. make feature tables
+rule make_TSStable:
+    input:
+        bamfile = "processed/merged_tagged_good.bam"
+    output:
+        csv = "processed/count_table_TSS.csv"
+    params:
+        runtime="30h",
+        minMQ = config['minMQ'],
+        TSStable = config['bedfile_TSS']
+    log:
+        stdout="log/count_table_TSS.stdout",
+        stderr="log/count_table_TSS.stderr"
+    resources:
+        mem_mb=40000
+
+    shell:
+        "bamToCountTable.py --filterXA -minMQ {params.minMQ} {input.bamfile} -o {output.csv} -sampleTags SM -joinedFeatureTags reference_name --dedup --r1only -bedfile {params.TSStable} > {log.stdout} 2> {log.stderr}"
+
+
+rule make_geneBodyTable:
+    input:
+        bamfile = "processed/merged_tagged_good.bam"
+    output:
+        csv = "processed/count_table_geneBody.csv"
+    params:
+        runtime="30h",
+        minMQ = config['minMQ'],
+        gb_table = config['bedfile_genebody']
+    log:
+        stdout="log/count_table_gb.stdout",
+        stderr="log/count_table_gb.stderr"
+    resources:
+        mem_mb=40000
+
+    shell:
+        "bamToCountTable.py --filterXA -minMQ {params.minMQ} {input.bamfile} -o {output.csv} -sampleTags SM -joinedFeatureTags reference_name --dedup --r1only -bedfile {params.gb_table} > {log.stdout} 2> {log.stderr}"
