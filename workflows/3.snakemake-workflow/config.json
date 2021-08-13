@@ -1,0 +1,10 @@
+{
+    "input_bam" : "/hpc/hub_oudenaarden/Marloes/data/tchic/gastruloids/k4me3_rep234_day34567.bam",
+    "cellSelection_output" : "k4me3_QCselector_round2.csv",
+    "clusters_csv" : "celltypes_updated2.csv",
+    "binSize" : 200,
+    "smoothLength" : 1000,
+    "minMQ" : 50,
+    "bedfile_TSS" : "/hpc/hub_oudenaarden/Peter/annotations/TSS_10kbwindow_mouse_ensmble97.bed", 
+    "bedfile_genebody" : "/hpc/hub_oudenaarden/Peter/annotations/genebody_mouse_ensmble97.bed"
+}
