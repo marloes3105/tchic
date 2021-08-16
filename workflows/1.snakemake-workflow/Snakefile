@@ -72,7 +72,7 @@ rule all:
         expand("processed_transcriptome/{library}/plots/ReadCount.png", library=libraries),
         expand("processed_transcriptome/{library}/rna_counts/{library}.loom", library=libraries),
         expand("processed_transcriptome/{library}/gene_counts.csv", library=libraries),
-        expand("processed_transcriptome/{library}/intron_counts.csv", library=libraries)
+        expand("processed_transcriptome/{library}/intron_counts.csv", library=libraries),
                         
         # merged
         expand("processed_chic/merged_tagged.bam"),
