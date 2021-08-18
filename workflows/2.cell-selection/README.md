@@ -22,3 +22,12 @@ source activate conda;python cellSelection.py -chic_csv Gast_d3-7_H3K4me3.50kb.c
 ```python
 submission.py --nenv -N cellselection -m 20 -time 80 -y "source activate conda;python cellSelection.py -chic_csv Gast_d3-7_H3K4me3.50kb.csv -trans_csv 20210623_rep234_day34567_cells_umapCoordinates.csv -o cellSelection"
 ```
+
+## If you still need to generate a chic csv table:
+Example
+
+```python
+ submission.py --nenv -N count_table -y "source activate conda;bamToCountTable.py -bin 50_000 -minMQ 50 --noNames merged_bamfile.bam -sampleTags SM -joinedFeatureTags reference_name -binTag DS --r1only -o output.csv --dedup"
+```
+
+
