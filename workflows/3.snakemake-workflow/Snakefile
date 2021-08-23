@@ -23,7 +23,7 @@ path_cl1 = 'processed/bigwigs/subset_' + str(clusters[1]) + '.bam'
 rule all:
     input:
         expand("processed/merged_tagged_good.bam"),
-        expand("processed/subset_{cluster}.bw", cluster=clusters),
+        expand("processed/bigwigs/subset_{cluster}.bw", cluster=clusters),
         expand("processed/count_table_TSS.csv"),
         expand("processed/count_table_geneBody.csv")
 
