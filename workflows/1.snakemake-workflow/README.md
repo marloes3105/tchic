@@ -9,6 +9,7 @@ All steps are described in more detail below. <br>
 
 ### to run this snakemake:
 - Edit the config file (config.json), make sure to set the right paths to the reference files and check if the parameters are correct.
+- Before submitting, you can check whether everything works by doing a dry run: `snakemake -n`. This will tell you if all files in your config file are present and working, if your libraries are detected etc.
 - Submit the workflow to the cluster. Important: when running from a conda environment, do not forget to use --use-conda! <p>
   Example submission using submission.py and a conda environment: 
   ```python
