@@ -106,7 +106,7 @@ rule make_TSStable:
         mem_mb=40000
 
     shell:
-        "bamToCountTable.py --filterXA -minMQ {params.minMQ} {input.bamfile} -o {output.csv} -sampleTags SM -joinedFeatureTags reference_name --dedup --r1only -bedfile {params.TSStable} > {log.stdout} 2> {log.stderr}"
+        "bamToCountTable.py -minMQ {params.minMQ} {input.bamfile} -o {output.csv} -sampleTags SM -joinedFeatureTags reference_name --dedup --r1only -bedfile {params.TSStable} > {log.stdout} 2> {log.stderr}"
 
 
 rule make_geneBodyTable:
@@ -125,4 +125,4 @@ rule make_geneBodyTable:
         mem_mb=40000
 
     shell:
-        "bamToCountTable.py --filterXA -minMQ {params.minMQ} {input.bamfile} -o {output.csv} -sampleTags SM -joinedFeatureTags reference_name --dedup --r1only -bedfile {params.gb_table} > {log.stdout} 2> {log.stderr}"
+        "bamToCountTable.py -minMQ {params.minMQ} {input.bamfile} -o {output.csv} -sampleTags SM -joinedFeatureTags reference_name --dedup --r1only -bedfile {params.gb_table} > {log.stdout} 2> {log.stderr}"
