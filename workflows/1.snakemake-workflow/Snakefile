@@ -54,7 +54,7 @@ def get_target_demux_list():
 
 def get_target_tagged_bam_list():
     return [f"processed_chic/{library}/tagged.bam" for library in libraries] + [f"processed_transcriptome/{library}/tagged.bam" for library in libraries]
-
+    return [f"processed_transcriptome/{library}/tagged.bam" for library in libraries]
 
 rule all:
     input:
@@ -268,7 +268,7 @@ rule chic_clean:
         elif config['cleanup'] == 'training':
             # using training script to define useful features
             shell(
-            "python /hpc/hub_oudenaarden/Marloes/bin/tchic/chic_splitter_selected.py -chic_bam {params.chic_training} \
+            "python /hpc/hub_oudenaarden/Marloes/bin/tchic/chic_transcriptome_split_updated.py -chic_bam {params.chic_training} \
             -vasa_bam {params.vasa_training} -tchic_bam {input.bam} -o {params.dir} -selection {params.selection} > {log.stdout} 2> {log.stderr}"
             )
         
