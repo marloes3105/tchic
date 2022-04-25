@@ -5,6 +5,7 @@
     "binSize" : 200,
     "smoothLength" : 1000,
     "minMQ" : 50,
+    "percentile" : 95,
     "bedfile_TSS" : "/hpc/hub_oudenaarden/Peter/annotations/TSS_10kbwindow_mouse_ensmble97.bed", 
     "bedfile_genebody" : "/hpc/hub_oudenaarden/Peter/annotations/genebody_mouse_ensmble97.bed"
 }
