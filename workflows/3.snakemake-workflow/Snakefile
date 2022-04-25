@@ -25,7 +25,9 @@ rule all:
         expand("processed/merged_tagged_good.bam"),
         expand("processed/bigwigs/subset_{cluster}.bw", cluster=clusters),
         expand("processed/count_table_TSS.csv"),
-        expand("processed/count_table_geneBody.csv")
+        expand("processed/count_table_geneBody.csv"),
+        expand("processed/normalised_count_table_TSS.csv"),
+        expand("processed/normalised_count_table_geneBody.csv")
 
 
 ################## start snakemake ##################
@@ -84,7 +86,7 @@ rule make_bigwigs:
         mem_mb=40000
 
     shell:
-        "bamCoverage --ignoreDuplicates --binSize {params.binSize} --smoothLength {params.smoothLength} \
+        "samtools index {params.bamfile};bamCoverage --ignoreDuplicates --binSize {params.binSize} --smoothLength {params.smoothLength} \
         --minMappingQuality {params.minMQ} --centerReads --normalizeUsing CPM \
         -b {params.bamfile} -o {output.bw} > {log.stdout} 2> {log.stderr}; rm {params.bamfile} {params.bamindex}"
 
@@ -106,8 +108,7 @@ rule make_TSStable:
         mem_mb=40000
 
     shell:
-        "bamToCountTable.py -minMQ {params.minMQ} {input.bamfile} -o {output.csv} -sampleTags SM -joinedFeatureTags reference_name --dedup --r1only -bedfile {params.TSStable} > {log.stdout} 2> {log.stderr}"
-
+        "bamToCountTable.py --filterXA -minMQ {params.minMQ} {input.bamfile} -o {output.csv} -sampleTags SM -joinedFeatureTags reference_name --dedup --r1only -bedfile {params.TSStable} > {log.stdout} 2> {log.stderr}"
 
 rule make_geneBodyTable:
     input:
@@ -125,4 +126,41 @@ rule make_geneBodyTable:
         mem_mb=40000
 
     shell:
-        "bamToCountTable.py -minMQ {params.minMQ} {input.bamfile} -o {output.csv} -sampleTags SM -joinedFeatureTags reference_name --dedup --r1only -bedfile {params.gb_table} > {log.stdout} 2> {log.stderr}"
+        "bamToCountTable.py --filterXA -minMQ {params.minMQ} {input.bamfile} -o {output.csv} -sampleTags SM -joinedFeatureTags reference_name --dedup --r1only -bedfile {params.gb_table} > {log.stdout} 2> {log.stderr}"
+
+
+# 5. make normalised feature tables
+rule normalise_TSStable:
+    input:
+        csv = "processed/count_table_TSS.csv"
+    output:
+        csv = "processed/normalised_count_table_TSS.csv"
+    params:
+        percentile = config['percentile']
+    log:
+        stdout="log/normalised_count_table_TSS.stdout",
+        stderr="log/normalised_count_table_TSS.stderr"
+    resources:
+        mem_mb=20000
+
+    shell:
+        "python /hpc/hub_oudenaarden/Marloes/bin/tchic/workflows/3.snakemake-workflow/normaliseChICdata.py -csv {input.csv} -o {output.csv} \
+        -percentile {params.percentile} --plots -plot_output processed/TSS_norm_plots/"
+
+rule normalise_geneBodyTable:
+    input:
+        csv = "processed/count_table_geneBody.csv"
+    output:
+        csv = "processed/normalised_count_table_geneBody.csv"
+    params:
+        gb_table = config['bedfile_genebody'],
+        percentile = config['percentile']
+    log:
+        stdout="log/normalised_count_table_gb.stdout",
+        stderr="log/normalised_count_table_gb.stderr"
+    resources:
+        mem_mb=20000
+
+    shell:
+        "python /hpc/hub_oudenaarden/Marloes/bin/tchic/workflows/3.snakemake-workflow/normaliseChICdata.py -csv {input.csv} -o {output.csv} \
+        -percentile {params.percentile} --plots -plot_output processed/GB_norm_plots/ --genebody -bedfile {params.gb_table}"
