@@ -28,7 +28,7 @@ plot_bin_sizes = config['plot_bin_sizes']
 
 # This code detects which libraries are present in the current folder:
 l = SequencingLibraryLister()
-LIBRARIES = l.detect(glob('*.fastq.gz'), merge='_')
+LIBRARIES = l.detect(glob('*.fastq.gz'), merge='_', silent=True)
 # Flatten to library:[fastqfile, fastqfile, ...]
 fastq_per_lib = collections.defaultdict(list)
 for lib,lane_dict in LIBRARIES.items():
