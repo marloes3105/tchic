@@ -128,6 +128,23 @@ rule filter_bam:
     shell:
         "samtools view {input.bam} -L {input.whitelist} -F 1536 --write-index -x RQ,aa,Is,CY,bc,LY,La,mI,FI,BC,Fi,aI,RC,CN,CX,fs,MM,RX,MI,rp,MX,rS,af,TF,rd,Fc,RN,rt,fS,Ti,ah,RS,TR,fe,lq,RZ,aA -o {output.bam} -@ {threads}"
 
+rule select_chic:
+    input:
+        mixed_reads = "processed_chic/{library}/demultiplexed{mate}.mixed.fastq.gz"
+    output:
+        chic_reads = "processed_chic/{library}/demultiplexed{mate}.fastq.gz"
+    shell:
+        "zcat {input.mixed_reads} | paste - - - - | grep 'dt:CHIC' | tr '\t' '\n' | gzip > {output.chic_reads}"
+
+rule select_vasa:
+    input:
+        mixed_reads = "processed_chic/{library}/demultiplexed{mate}.mixed.fastq.gz"
+    output:
+        vasa_reads = "processed_chic/{library}/demultiplexed{mate}.vasa.fastq.gz"
+    shell:
+        "zcat {input.mixed_reads} | paste - - - - | grep 'dt:VASA' | tr '\t' '\n' | gzip > {output.vasa_reads}"
+
+
     resources:
         mem_mb=lambda wildcards, attempt: attempt * 4000
 
