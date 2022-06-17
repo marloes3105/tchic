@@ -145,12 +145,27 @@ rule select_vasa:
         "zcat {input.mixed_reads} | paste - - - - | grep 'dt:VASA' | tr '\t' '\n' | gzip > {output.vasa_reads}"
 
 
+rule coverage:
+    input:
+        bam = "{prefix}/{library}/tagged.filtered.bam",
+        bam_index = "{prefix}/{library}/tagged.filtered.bam.csi",
+        blacklist = config['blacklist']
+    output:
+        bw = "{prefix}/{library}/coverage.bw"
+    log:
+        stdout="log/cov/{prefix}_{library}.stdout",
+        stderr="log/cov/{prefix}_{library}.stderr"
+
+    threads: 8
+    params:
+        runtime="20h",
+        binsize=50
     resources:
         mem_mb=lambda wildcards, attempt: attempt * 4000
 
     shell:
-        "demux.py -merge _ {input.fastqfiles} -use scCHIC384C8U3l -hd 0 -o processed_chic --y > {log.stdout} 2> {log.stderr}"
-        
+        "bamCoverage -p {threads}  --bam {input.bam} -bs {params.binsize} --normalizeUsing CPM --blackListFileName {input.blacklist} -o {output.bw} > {log.stdout} 2> {log.stderr}"
+
 
 # 2. Trimming of chic reads
 rule chic_trim:
