@@ -359,7 +359,7 @@ rule chic_SCMO_library_stats:
     params: runtime="30h"
 
     shell:
-        "libraryStatistics.py processed_chic/{wildcards.library} -tagged_bam {input.bam} > {log.stdout} 2> {log.stderr}"
+        "libraryStatistics.py processed_chic/{wildcards.library} --nort -tagged_bam {input.bam} > {log.stdout} 2> {log.stderr}"
 
 
 # 9. Making chic count tables per library
