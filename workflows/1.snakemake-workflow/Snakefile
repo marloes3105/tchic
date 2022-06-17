@@ -56,6 +56,12 @@ def get_target_tagged_bam_list():
     return [f"processed_chic/{library}/tagged.bam" for library in libraries] + [f"processed_transcriptome/{library}/tagged.bam" for library in libraries]
     return [f"processed_transcriptome/{library}/tagged.bam" for library in libraries]
 
+rule get_coverage:
+    input:
+        expand("processed_transcriptome/{library}/coverage.bw", library=libraries),
+        expand("processed_chic/{library}/coverage.bw", library=libraries)
+
+
 rule all:
     input:
         # get_target_demux_list() use this for demux only
