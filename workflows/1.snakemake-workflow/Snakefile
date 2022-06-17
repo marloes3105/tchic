@@ -74,6 +74,9 @@ rule all:
             counting_bin_size=counting_bin_sizes),        
         expand("processed_chic/{library}/plots/ReadCount.png", library=libraries),
         
+        expand("processed_chic/{library}/demultiplexedR1.vasa.fastq.gz", library=libraries),
+        expand("processed_chic/{library}/demultiplexedR2.vasa.fastq.gz", library=libraries),
+
         # transcriptome
         expand("processed_transcriptome/{library}/plots/ReadCount.png", library=libraries),
         expand("processed_transcriptome/{library}/rna_counts/{library}.loom", library=libraries),
