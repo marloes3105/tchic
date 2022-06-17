@@ -269,24 +269,24 @@ rule chic_SCMO_tagmultiome:
     log:
         stdout="log/tag/chic_{library}.stdout",
         stderr="log/tag/chic_{library}.stderr"
-    threads: 10
+    threads: 6
     params: runtime="20h"
     resources:
-        mem_mb=lambda wildcards, attempt: 55000 + attempt * 6000 # The amount of memory required is dependent on whether alleles or consensus caller are used
+        mem_mb=lambda wildcards, attempt: attempt * 6000 # 55000 + # The amount of memory required is dependent on whether alleles or consensus caller are used
 
     run:
         if config['use_blacklist']=='disabled':
             # The sorting and mapping has been disconnected
             shell(
-                "bamtagmultiome.py --multiprocess -method chict -tagthreads {threads} -introns {input.introns} -exons {input.exons} {input.bam} \
+                "bamtagmultiome.py --multiprocess --one_contig_per_process -method chict -tagthreads {threads} -introns {input.introns} -exons {input.exons} {input.bam} \
                 -o {output.bam} > {log.stdout} 2> {log.stderr}"
                 )
         elif config['use_blacklist']=='enabled':
             shell(
-                "bamtagmultiome.py --multiprocess -tagthreads {threads} -blacklist {input.blacklist} -introns {input.introns} -exons {input.exons} \
+                "bamtagmultiome.py --multiprocess --one_contig_per_process -tagthreads {threads} -blacklist {input.blacklist} -introns {input.introns} -exons {input.exons} \
                 -method chict {input.bam} -o {output.bam} > {log.stdout} 2> {log.stderr}"
                 )
- 
+
 
 # 6. Filter bam file based on maximum insert size and minimum mapping quality specified in config file
 rule SCMO_filtering:
