@@ -56,11 +56,6 @@ def get_target_tagged_bam_list():
     return [f"processed_chic/{library}/tagged.bam" for library in libraries] + [f"processed_transcriptome/{library}/tagged.bam" for library in libraries]
     return [f"processed_transcriptome/{library}/tagged.bam" for library in libraries]
 
-rule get_coverage:
-    input:
-        expand("processed_transcriptome/{library}/coverage.bw", library=libraries),
-        expand("processed_chic/{library}/coverage.bw", library=libraries)
-
 
 rule all:
     input:
@@ -74,6 +69,8 @@ rule all:
             counting_bin_size=counting_bin_sizes),        
         expand("processed_chic/{library}/plots/ReadCount.png", library=libraries),
         
+        expand("processed_chic/{library}/tss_counts.csv.gz", library=libraries),
+        expand("processed_chic/{library}/tss_gene_total_counts.csv.gz", library=libraries),
         expand("processed_chic/{library}/demultiplexedR1.vasa.fastq.gz", library=libraries),
         expand("processed_chic/{library}/demultiplexedR2.vasa.fastq.gz", library=libraries),
 
@@ -92,7 +89,18 @@ rule all:
         expand("processed_chic/GC_plots/histplot_{plot_bin_size}.png", plot_bin_size=plot_bin_sizes),
         expand("processed_chic/plots/ReadCount.png", library=libraries),
         expand("processed_chic/tables/ScCHICLigation_merged_tagged.bamTA_obs_per_cell.csv", library=libraries),
-       
+
+rule get_coverage:
+    input:
+        expand("processed_transcriptome/{library}/coverage.bw", library=libraries),
+        expand("processed_chic/{library}/coverage.bw", library=libraries)
+
+rule get_tss_counts:
+    input:
+        expand("processed_chic/{library}/tss_counts.csv.gz", library=libraries),
+        expand("processed_chic/{library}/tss_gene_total_counts.csv.gz", library=libraries)
+
+
 
 ################## start snakemake ##################
 
