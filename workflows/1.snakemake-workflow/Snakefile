@@ -180,12 +180,25 @@ rule chic_trim:
         r2=temp("processed_chic/{library}/trimmed.R2.fastq.gz")
     params: runtime="30h"
     resources:
-        mem_mb=lambda wildcards, attempt: 20000 + attempt * 4000
+        mem_mb=lambda wildcards, attempt: attempt * 200 # never really saw it pass 150mb
 
     shell:
-        'cutadapt -o {output.r1} -p {output.r2} \
+        'cutadapt -o {output.r1} -p {output.r2} -j 4 -m 12 -n 3\
         {input.r1} {input.r2} \
-        -m 3 -a "IlluminaSmallAdapterConcatBait=GGAACTCCAGTCACNNNNNNATCTCGTATGCCGTCTTCTGCTT" \
+        -a "ClonTechPrimer=TGCCGGTAATACGACTCACTATAGGGAGTTCTACAGTCCGACT;anywhere" \
+        -a "IlluminaSmallAdapterConcatBait=GGAACTCCAGTCACNNNNNNATCTCGTATGCCGTCTTCTGCTT" \
+        -a "concraptamer=TATGGTGATGCCGGTAATACGACTCAC" \
+        -a "ufo=GGTGATGCCGGTAAT" \
+        -A "polyG=GGGGGGGGGGGGGGGGGGG" \
+        -a "clontechUfo=TGCCGGTAATACGACTCACTATAGGGAGTTCTACAGTCCGACGATCTGTATCACAGATTGCCGGTAATACGACTCACTATAGGGAGTTC" \
+        -a "indexReadPrimerConcatIlluminaIndexAdapter=TGCCGGTAATACGACTCACTATAGGGAGTTCTACAGTCCGACTGGAATTCTCGGGTGCCAAGGAACTCCAGTCACN{{6}}" \
+        -a "t7=TGCCGGTAATACGACTCACTATAGGGAGTTCTACAGTCCGACGATC{{6}};min_overlap=5" \
+        -a "RTprimer=CGATTGAGGCCGGTAATACGACTCACTATAGGGGTTCAGAGTTCTACAGTCCGACGATC;min_overlap=5" \
+        -a "indexReadPrimer=TGGAATTCTCGGGTGCCAAGGAACTCCAGTCAC" \
+        -a "RP1Primer=AATGATACGGCGACCACCGAGATCTACACGTTCAGAGTTCTACAGTCCGA" \
+        -A "RP1Primer_r=TCGGACTGTAGAACTCTGAACGTGTAGATCTCGGTGGTCGCCGTATCATT" \
+        -A "R2SeqPrimer=GTGACTGGAGTTCCTTGGCACCCGAGAATTCCA" \
+        -A "illumina5pSmallRNAadapter=NNNNNNNNGATCGTCGGACTGTAGAACTCTGAAC" \
         -a "IlluminaIndexAdapter=GGAATTCTCGGGTGCCAAGGAACTCCAGTCACN{{6}}ATCTCGTATGCCGTCTTCTGCTTG" \
         -A "IlluminaPairedEndPCRPrimer2.0=AGATCGGAAGAGCGN{{6}}CAGGAATGCCGAGACCGATCTCGTATGCCGTCTTCTGCTTG;min_overlap=5" \
         -A "universalPrimer=GATCGTCGGACTGTAGAACTCTGAACGTGTAGATCTCGGTGGTCGCCGTATCATT;min_overlap=5" \
