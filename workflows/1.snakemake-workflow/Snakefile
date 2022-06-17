@@ -116,6 +116,18 @@ rule chic_SCMO_demux:
     shell:
         "demux.py -merge _ {input.fastqfiles} -use TCHIC -hd 0 -o processed_chic --y > {log.stdout} 2> {log.stderr} && mv processed_chic/{wildcards.library}/demultiplexedR1.fastq.gz processed_chic/{wildcards.library}/demultiplexedR1.mixed.fastq.gz && mv processed_chic/{wildcards.library}/demultiplexedR2.fastq.gz processed_chic/{wildcards.library}/demultiplexedR2.mixed.fastq.gz"
 
+rule filter_bam:
+    input:
+        bam = "{prefix}/{library}/tagged.bam",
+        bam_index = "{prefix}/{library}/tagged.bam.bai",
+        whitelist= config['whitelist']
+    output:
+        bam = "{prefix}/{library}/tagged.filtered.bam",
+        bam_index = "{prefix}/{library}/tagged.filtered.bam.csi"
+    threads: 4
+    shell:
+        "samtools view {input.bam} -L {input.whitelist} -F 1536 --write-index -x RQ,aa,Is,CY,bc,LY,La,mI,FI,BC,Fi,aI,RC,CN,CX,fs,MM,RX,MI,rp,MX,rS,af,TF,rd,Fc,RN,rt,fS,Ti,ah,RS,TR,fe,lq,RZ,aA -o {output.bam} -@ {threads}"
+
     resources:
         mem_mb=lambda wildcards, attempt: attempt * 4000
 
