@@ -580,7 +580,7 @@ rule transcriptome_SCMO_tagmultiome_VASA:
         if config.get('4sU','disabled')=='enabled':
             shell("4SUtagger.py {input.bam} --R2_based  -known {params.known_variants} -reference {params.reference_fasta} -temp_dir processed_transcriptome/{wildcards.library}/scmo_temp -tagthreads {threads} -introns {input.introns} -exons {input.exons} -o {output.bam} > {log.stdout} 2> {log.stderr}")
         else:
-            shell("bamtagmultiome.py --multiprocess -tagthreads {threads} -introns {input.introns} -exons {input.exons} -method vasa {input.bam} -o {output.bam} > {log.stdout} 2> {log.stderr}")
+            shell("bamtagmultiome.py --multiprocess --one_contig_per_process -tagthreads {threads} -introns {input.introns} -exons {input.exons} -method vasa {input.bam} -o {output.bam} > {log.stdout} 2> {log.stderr}")
 
 
 # 6. Make transcriptome library stats
