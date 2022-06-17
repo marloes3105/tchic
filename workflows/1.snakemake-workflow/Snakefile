@@ -311,7 +311,26 @@ rule SCMO_filtering:
         'r.has_tag("fS") and (r.get_tag("fS") < {params.insertSize}) and r.has_tag("MQ") and (r.get_tag("MQ") >= {params.counting_min_mq} )' > {log.stdout} 2> {log.stderr} '''
 
 
-# 7. Clean up chic libraries and remove vasa (transcriptome) contamination 
+rule SCMO_TSS_COUNT:
+    input:
+        bam = "processed_chic/{library}/tagged.filtered.bam",
+        bam_index = "processed_chic/{library}/tagged.filtered.bam.csi",
+        tss_regions = config['tss_regions']
+
+    output:
+        counts = "processed_chic/{library}/tss_counts.csv.gz",
+        counts_total = "processed_chic/{library}/tss_gene_total_counts.csv.gz"
+    log:
+        stdout="log/SCMO_TSS_COUNT/{library}.stdout",
+        stderr="log/SCMO_TSS_COUNT/{library}.stderr"
+    resources:
+        mem_mb=lambda wildcards, attempt: 8000 + attempt * 8000
+    threads: 32
+    shell:
+        "bamCountRegions.py {input.bam} -t {threads} -regions {input.tss_regions} -o {output.counts} -s {output.counts_total} > {log.stdout} 2> {log.stderr}"
+
+
+# 7. Clean up chic libraries and remove vasa (transcriptome) contamination
 rule chic_clean:
     input:
         bam = "processed_chic/{library}/tagged_filtered.bam"
