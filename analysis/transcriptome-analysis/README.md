@@ -9,7 +9,35 @@ This notebook does Scanpy preprocessing, clustering, plotting and defining cell 
 
 
 3. Trajectories:<br/>
-This notebook takes the adata file produced by the QC_cellTyping notebook as input. Here we can calculate trajectories and pseudotime using PAGA and Wishbone - these are external Scanpy packages, meaning they need to be installed separately but are integrated with scanpy datafiles (such as adata). We can also compute RNA velocity using scVelo and hopefully find some interesting genes in terms of velocity, or look at differences across the calculated pseudotime in terms of spliced/unspliced transcripts.
+This R-script loads the necessary files pulled from the Scanpy adata file and runs monocle (standard settings) for trajectory inference/pseudotime analysis. To generate the files necessary for this R script you can use the following:
+```
+#adata_var
+adata.var.to_csv("adata_var.csv")
+
+#adata_obs
+adata.obs.to_csv("adata_obs.csv")
+
+#umap coordinates
+pd.DataFrame(adata.obsm['X_umap']).to_csv("umap_coord.csv")
+
+#count matrix - sparse!!
+## import packages
+import scipy
+import scipy.sparse as sparse
+import scipy.io as sio
+import scipy.stats as stats
+import numpy as np
+## extract count table and make sure it is integers
+counts_int = pd.DataFrame(adata.layers['matrix'].toarray())
+counts_int = counts_int.astype(int)
+## format colnames, rownames etc (not sure if this matters?) and transpose
+counts_int.index = adata.obs.index
+counts_int.columns = adata.var.index
+counts_int = pd.DataFrame(counts_int).T
+## make a scipy sparse matrix (!!) and write
+counts_int_sparse = scipy.sparse.csr_matrix(counts_int)
+sio.mmwrite("sparse_matrix_int.mtx",counts_int_sparse)
+```
 
 
 ## Required packages
