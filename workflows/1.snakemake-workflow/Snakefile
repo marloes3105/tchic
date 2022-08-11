@@ -28,7 +28,7 @@ plot_bin_sizes = config['plot_bin_sizes']
 
 # This code detects which libraries are present in the current folder:
 l = SequencingLibraryLister()
-LIBRARIES = l.detect(glob('*.fastq.gz'), merge='_')
+LIBRARIES = l.detect(glob('*.fastq.gz'), merge='_', silent=True)
 # Flatten to library:[fastqfile, fastqfile, ...]
 fastq_per_lib = collections.defaultdict(list)
 for lib,lane_dict in LIBRARIES.items():
@@ -56,6 +56,7 @@ def get_target_tagged_bam_list():
     return [f"processed_chic/{library}/tagged.bam" for library in libraries] + [f"processed_transcriptome/{library}/tagged.bam" for library in libraries]
     return [f"processed_transcriptome/{library}/tagged.bam" for library in libraries]
 
+
 rule all:
     input:
         # get_target_demux_list() use this for demux only
@@ -68,6 +69,11 @@ rule all:
             counting_bin_size=counting_bin_sizes),        
         expand("processed_chic/{library}/plots/ReadCount.png", library=libraries),
         
+        expand("processed_chic/{library}/tss_counts.csv.gz", library=libraries),
+        expand("processed_chic/{library}/tss_gene_total_counts.csv.gz", library=libraries),
+        expand("processed_chic/{library}/demultiplexedR1.vasa.fastq.gz", library=libraries),
+        expand("processed_chic/{library}/demultiplexedR2.vasa.fastq.gz", library=libraries),
+
         # transcriptome
         expand("processed_transcriptome/{library}/plots/ReadCount.png", library=libraries),
         expand("processed_transcriptome/{library}/rna_counts/{library}.loom", library=libraries),
@@ -83,7 +89,18 @@ rule all:
         expand("processed_chic/GC_plots/histplot_{plot_bin_size}.png", plot_bin_size=plot_bin_sizes),
         expand("processed_chic/plots/ReadCount.png", library=libraries),
         expand("processed_chic/tables/ScCHICLigation_merged_tagged.bamTA_obs_per_cell.csv", library=libraries),
-       
+
+rule get_coverage:
+    input:
+        expand("processed_transcriptome/{library}/coverage.bw", library=libraries),
+        expand("processed_chic/{library}/coverage.bw", library=libraries)
+
+rule get_tss_counts:
+    input:
+        expand("processed_chic/{library}/tss_counts.csv.gz", library=libraries),
+        expand("processed_chic/{library}/tss_gene_total_counts.csv.gz", library=libraries)
+
+
 
 ################## start snakemake ##################
 
@@ -96,8 +113,8 @@ rule chic_SCMO_demux:
     input:
         fastqfiles = get_fastq_file_list
     output:
-        temp("processed_chic/{library}/demultiplexedR1.fastq.gz"),
-        temp("processed_chic/{library}/demultiplexedR2.fastq.gz"),
+        temp("processed_chic/{library}/demultiplexedR1.mixed.fastq.gz"),
+        temp("processed_chic/{library}/demultiplexedR2.mixed.fastq.gz"),
         temp("processed_chic/{library}/rejectsR1.fastq.gz"),
         temp("processed_chic/{library}/rejectsR2.fastq.gz")
     log:
@@ -105,11 +122,61 @@ rule chic_SCMO_demux:
         stderr="log/demux/chic_{library}.stderr"
     params: runtime="30h"
     resources:
+        mem_mb=lambda wildcards, attempt: attempt * 500
+
+    shell:
+        "demux.py -merge _ {input.fastqfiles} -use TCHIC -hd 0 -o processed_chic --y > {log.stdout} 2> {log.stderr} && mv processed_chic/{wildcards.library}/demultiplexedR1.fastq.gz processed_chic/{wildcards.library}/demultiplexedR1.mixed.fastq.gz && mv processed_chic/{wildcards.library}/demultiplexedR2.fastq.gz processed_chic/{wildcards.library}/demultiplexedR2.mixed.fastq.gz"
+
+rule filter_bam:
+    input:
+        bam = "{prefix}/{library}/tagged.bam",
+        bam_index = "{prefix}/{library}/tagged.bam.bai",
+        whitelist= config['whitelist']
+    output:
+        bam = "{prefix}/{library}/tagged.filtered.bam",
+        bam_index = "{prefix}/{library}/tagged.filtered.bam.csi"
+    threads: 4
+    shell:
+        "samtools view {input.bam} -L {input.whitelist} -F 1536 --write-index -x RQ,aa,Is,CY,bc,LY,La,mI,FI,BC,Fi,aI,RC,CN,CX,fs,MM,RX,MI,rp,MX,rS,af,TF,rd,Fc,RN,rt,fS,Ti,ah,RS,TR,fe,lq,RZ,aA -o {output.bam} -@ {threads}"
+
+rule select_chic:
+    input:
+        mixed_reads = "processed_chic/{library}/demultiplexed{mate}.mixed.fastq.gz"
+    output:
+        chic_reads = "processed_chic/{library}/demultiplexed{mate}.fastq.gz"
+    shell:
+        "zcat {input.mixed_reads} | paste - - - - | grep 'dt:CHIC' | tr '\t' '\n' | gzip > {output.chic_reads}"
+
+rule select_vasa:
+    input:
+        mixed_reads = "processed_chic/{library}/demultiplexed{mate}.mixed.fastq.gz"
+    output:
+        vasa_reads = "processed_chic/{library}/demultiplexed{mate}.vasa.fastq.gz"
+    shell:
+        "zcat {input.mixed_reads} | paste - - - - | grep 'dt:VASA' | tr '\t' '\n' | gzip > {output.vasa_reads}"
+
+
+rule coverage:
+    input:
+        bam = "{prefix}/{library}/tagged.filtered.bam",
+        bam_index = "{prefix}/{library}/tagged.filtered.bam.csi",
+        blacklist = config['blacklist']
+    output:
+        bw = "{prefix}/{library}/coverage.bw"
+    log:
+        stdout="log/cov/{prefix}_{library}.stdout",
+        stderr="log/cov/{prefix}_{library}.stderr"
+
+    threads: 8
+    params:
+        runtime="20h",
+        binsize=50
+    resources:
         mem_mb=lambda wildcards, attempt: attempt * 4000
 
     shell:
-        "demux.py -merge _ {input.fastqfiles} -use scCHIC384C8U3l -hd 0 -o processed_chic --y > {log.stdout} 2> {log.stderr}"
-        
+        "bamCoverage -p {threads}  --bam {input.bam} -bs {params.binsize} --normalizeUsing CPM --blackListFileName {input.blacklist} -o {output.bw} > {log.stdout} 2> {log.stderr}"
+
 
 # 2. Trimming of chic reads
 rule chic_trim:
@@ -124,12 +191,25 @@ rule chic_trim:
         r2=temp("processed_chic/{library}/trimmed.R2.fastq.gz")
     params: runtime="30h"
     resources:
-        mem_mb=lambda wildcards, attempt: 20000 + attempt * 4000
+        mem_mb=lambda wildcards, attempt: attempt * 200 # never really saw it pass 150mb
 
     shell:
-        'cutadapt -o {output.r1} -p {output.r2} \
+        'cutadapt -o {output.r1} -p {output.r2} -j 4 -m 12 -n 3\
         {input.r1} {input.r2} \
-        -m 3 -a "IlluminaSmallAdapterConcatBait=GGAACTCCAGTCACNNNNNNATCTCGTATGCCGTCTTCTGCTT" \
+        -a "ClonTechPrimer=TGCCGGTAATACGACTCACTATAGGGAGTTCTACAGTCCGACT;anywhere" \
+        -a "IlluminaSmallAdapterConcatBait=GGAACTCCAGTCACNNNNNNATCTCGTATGCCGTCTTCTGCTT" \
+        -a "concraptamer=TATGGTGATGCCGGTAATACGACTCAC" \
+        -a "ufo=GGTGATGCCGGTAAT" \
+        -A "polyG=GGGGGGGGGGGGGGGGGGG" \
+        -a "clontechUfo=TGCCGGTAATACGACTCACTATAGGGAGTTCTACAGTCCGACGATCTGTATCACAGATTGCCGGTAATACGACTCACTATAGGGAGTTC" \
+        -a "indexReadPrimerConcatIlluminaIndexAdapter=TGCCGGTAATACGACTCACTATAGGGAGTTCTACAGTCCGACTGGAATTCTCGGGTGCCAAGGAACTCCAGTCACN{{6}}" \
+        -a "t7=TGCCGGTAATACGACTCACTATAGGGAGTTCTACAGTCCGACGATC{{6}};min_overlap=5" \
+        -a "RTprimer=CGATTGAGGCCGGTAATACGACTCACTATAGGGGTTCAGAGTTCTACAGTCCGACGATC;min_overlap=5" \
+        -a "indexReadPrimer=TGGAATTCTCGGGTGCCAAGGAACTCCAGTCAC" \
+        -a "RP1Primer=AATGATACGGCGACCACCGAGATCTACACGTTCAGAGTTCTACAGTCCGA" \
+        -A "RP1Primer_r=TCGGACTGTAGAACTCTGAACGTGTAGATCTCGGTGGTCGCCGTATCATT" \
+        -A "R2SeqPrimer=GTGACTGGAGTTCCTTGGCACCCGAGAATTCCA" \
+        -A "illumina5pSmallRNAadapter=NNNNNNNNGATCGTCGGACTGTAGAACTCTGAAC" \
         -a "IlluminaIndexAdapter=GGAATTCTCGGGTGCCAAGGAACTCCAGTCACN{{6}}ATCTCGTATGCCGTCTTCTGCTTG" \
         -A "IlluminaPairedEndPCRPrimer2.0=AGATCGGAAGAGCGN{{6}}CAGGAATGCCGAGACCGATCTCGTATGCCGTCTTCTGCTTG;min_overlap=5" \
         -A "universalPrimer=GATCGTCGGACTGTAGAACTCTGAACGTGTAGATCTCGGTGGTCGCCGTATCATT;min_overlap=5" \
@@ -200,24 +280,24 @@ rule chic_SCMO_tagmultiome:
     log:
         stdout="log/tag/chic_{library}.stdout",
         stderr="log/tag/chic_{library}.stderr"
-    threads: 10
+    threads: 6
     params: runtime="20h"
     resources:
-        mem_mb=lambda wildcards, attempt: 55000 + attempt * 6000 # The amount of memory required is dependent on whether alleles or consensus caller are used
+        mem_mb=lambda wildcards, attempt: attempt * 6000 # 55000 + # The amount of memory required is dependent on whether alleles or consensus caller are used
 
     run:
         if config['use_blacklist']=='disabled':
             # The sorting and mapping has been disconnected
             shell(
-                "bamtagmultiome.py --multiprocess -method chict -tagthreads {threads} -introns {input.introns} -exons {input.exons} {input.bam} \
+                "bamtagmultiome.py --multiprocess --one_contig_per_process -method chict -tagthreads {threads} -introns {input.introns} -exons {input.exons} {input.bam} \
                 -o {output.bam} > {log.stdout} 2> {log.stderr}"
                 )
         elif config['use_blacklist']=='enabled':
             shell(
-                "bamtagmultiome.py --multiprocess -tagthreads {threads} -blacklist {input.blacklist} -introns {input.introns} -exons {input.exons} \
+                "bamtagmultiome.py --multiprocess --one_contig_per_process -tagthreads {threads} -blacklist {input.blacklist} -introns {input.introns} -exons {input.exons} \
                 -method chict {input.bam} -o {output.bam} > {log.stdout} 2> {log.stderr}"
                 )
- 
+
 
 # 6. Filter bam file based on maximum insert size and minimum mapping quality specified in config file
 rule SCMO_filtering:
@@ -239,7 +319,26 @@ rule SCMO_filtering:
         'r.has_tag("fS") and (r.get_tag("fS") < {params.insertSize}) and r.has_tag("MQ") and (r.get_tag("MQ") >= {params.counting_min_mq} )' > {log.stdout} 2> {log.stderr} '''
 
 
-# 7. Clean up chic libraries and remove vasa (transcriptome) contamination 
+rule SCMO_TSS_COUNT:
+    input:
+        bam = "processed_chic/{library}/tagged.filtered.bam",
+        bam_index = "processed_chic/{library}/tagged.filtered.bam.csi",
+        tss_regions = config['tss_regions']
+
+    output:
+        counts = "processed_chic/{library}/tss_counts.csv.gz",
+        counts_total = "processed_chic/{library}/tss_gene_total_counts.csv.gz"
+    log:
+        stdout="log/SCMO_TSS_COUNT/{library}.stdout",
+        stderr="log/SCMO_TSS_COUNT/{library}.stderr"
+    resources:
+        mem_mb=lambda wildcards, attempt: 8000 + attempt * 8000
+    threads: 32
+    shell:
+        "bamCountRegions.py {input.bam} -t {threads} -regions {input.tss_regions} -o {output.counts} -s {output.counts_total} > {log.stdout} 2> {log.stderr}"
+
+
+# 7. Clean up chic libraries and remove vasa (transcriptome) contamination
 rule chic_clean:
     input:
         bam = "processed_chic/{library}/tagged_filtered.bam"
@@ -290,7 +389,7 @@ rule chic_SCMO_library_stats:
     params: runtime="30h"
 
     shell:
-        "libraryStatistics.py processed_chic/{wildcards.library} -tagged_bam {input.bam} > {log.stdout} 2> {log.stderr}"
+        "libraryStatistics.py processed_chic/{wildcards.library} --nort -tagged_bam {input.bam} > {log.stdout} 2> {log.stderr}"
 
 
 # 9. Making chic count tables per library
@@ -511,7 +610,7 @@ rule transcriptome_SCMO_tagmultiome_VASA:
         if config.get('4sU','disabled')=='enabled':
             shell("4SUtagger.py {input.bam} --R2_based  -known {params.known_variants} -reference {params.reference_fasta} -temp_dir processed_transcriptome/{wildcards.library}/scmo_temp -tagthreads {threads} -introns {input.introns} -exons {input.exons} -o {output.bam} > {log.stdout} 2> {log.stderr}")
         else:
-            shell("bamtagmultiome.py --multiprocess -tagthreads {threads} -introns {input.introns} -exons {input.exons} -method vasa {input.bam} -o {output.bam} > {log.stdout} 2> {log.stderr}")
+            shell("bamtagmultiome.py --multiprocess --one_contig_per_process -tagthreads {threads} -introns {input.introns} -exons {input.exons} -method vasa {input.bam} -o {output.bam} > {log.stdout} 2> {log.stderr}")
 
 
 # 6. Make transcriptome library stats

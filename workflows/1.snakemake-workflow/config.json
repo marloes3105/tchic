@@ -8,6 +8,7 @@
     "chic_reference_file"  :  "/hpc/hub_oudenaarden/group_references/ensembl/97/mus_musculus/primary_assembly_97_129B6Masked_ERCC92_ribo.fa",
     "use_blacklist" : "enabled",
     "blacklist" : "/hpc/hub_oudenaarden/bdebarbanson/ref/500_plus_coverage_spikes_blacklist_CHiC_mm10.bed",
+    "whitelist" : "/references/ensembl/97/mus_musculus/mm10-whitelist.v2.nochr.bed",
     "counting_min_mq" : 50,
     "insertSize" : 1000,
     "counting_bin_sizes": [50_000],
@@ -17,6 +18,7 @@
     "chic_training_file" : "/hpc/hub_oudenaarden/Marloes/bin/tchic/train_data/PZ-MB-TChIC-Gastd7-rep2-H3K27me3-C/tagged_filtered.bam",
     "vasa_training_file" : "/hpc/hub_oudenaarden/Marloes/bin/tchic/train_data/PZ-MB-TChIC-Gastd7-rep2-H3K27me3-T/tagged_filtered.bam",
     "selection" : "TA,TC,TG,TT,CT,CC,CA",
+    "tss_regions" : "/home/buysdb/repos/tchic/data/gast/TSS_detect/3000/all.bed.gz",
 
     # Transcriptome:    
     "trans_reference_file"  :  "/hpc/hub_oudenaarden/group_references/ensembl/97/mus_musculus/129B6masked_ribo_star_cleaned_index_99",
