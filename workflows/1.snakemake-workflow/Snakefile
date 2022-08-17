@@ -294,7 +294,7 @@ rule chic_SCMO_tagmultiome:
                 )
         elif config['use_blacklist']=='enabled':
             shell(
-                "bamtagmultiome.py --multiprocess --one_contig_per_process -tagthreads {threads} -blacklist {input.blacklist} -introns {input.introns} -exons {input.exons} \
+                "bamtagmultiome.py --multiprocess -tagthreads {threads} -blacklist {input.blacklist} -introns {input.introns} -exons {input.exons} \
                 -method chict {input.bam} -o {output.bam} > {log.stdout} 2> {log.stderr}"
                 )
 
