@@ -7,8 +7,8 @@ from singlecellmultiomics.utils import get_contig_list_from_fasta
 This workflow:
     Starts off from a folder containing fastq files
     - Detects libraries
-    - Demultiplexes per librar into a chic and transcriptome fraction
-    - Trims ChiC adapters using cutadapt
+    - Demultiplexes per library into a chic and transcriptome fraction
+    - Trims CHIC adapters using cutadapt
     - Trims VASA adapters using trim_vasa.py
     - Maps, sorts and indexes the reads per library
     - Deduplicates and identifies ChiC molecules in parallel per contig
