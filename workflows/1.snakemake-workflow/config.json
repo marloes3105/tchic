@@ -2,13 +2,13 @@
     # both:
     "introns" : "/hpc/hub_oudenaarden/group_references/ensembl/97/mus_musculus/introns_cleaned.gtf.gz",
     "exons" : "/hpc/hub_oudenaarden/group_references/ensembl/97/mus_musculus/exons_cleaned.gtf.gz",   
+    "counting_min_mq" : 50,
     
     # ChIC:
     "chic_mapper":"bwa",  
     "chic_reference_file"  :  "/hpc/hub_oudenaarden/group_references/ensembl/97/mus_musculus/primary_assembly_97_129B6Masked_ERCC92_ribo.fa",
     "use_blacklist" : "enabled",
     "blacklist" : "/hpc/hub_oudenaarden/Marloes/bin/tchic/blacklist/mm10_combined2.bed",
-    "counting_min_mq" : 50,
     "insertSize" : 1000,
     "counting_bin_sizes": [50_000],
     "plot_bin_sizes" : [500_000, 1000_000],
