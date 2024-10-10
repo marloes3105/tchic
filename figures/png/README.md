@@ -1,0 +1,1 @@
+storage of .png images
