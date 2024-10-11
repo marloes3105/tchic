@@ -16,7 +16,7 @@ Here you can find relevant data files, e.g. cell type cluster csv files to split
 
 
 4. **figures:**<br/>
-Here you can find the notebooks that were used to generate figures corresponding to the [biorxiv paper]{https://www.biorxiv.org/content/10.1101/2024.05.09.593364v1}.
+Here you can find the notebooks that were used to generate figures corresponding to the [biorxiv paper](https://www.biorxiv.org/content/10.1101/2024.05.09.593364v1).
 <br>
 
 
