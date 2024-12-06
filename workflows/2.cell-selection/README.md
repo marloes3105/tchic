@@ -1,9 +1,9 @@
 # step 2
 
 ## transcriptome modality
-(1) read in plates using the script '0_TCHC_ReadInPlates'. 
-(2) perform basic QC on the transcriptome fraction using scanpy, and principle components are calculated and exported in notebook 2a: '2a_TCHIC_QC_until_PCs'.
-(3) filter ChIC modality using notebook 2b (see 'ChIC' header)
+(1) read in plates using the script '0_TCHC_ReadInPlates'. \
+(2) perform basic QC on the transcriptome fraction using scanpy, and principle components are calculated and exported in notebook 2a: '2a_TCHIC_QC_until_PCs'. \
+(3) filter ChIC modality using notebook 2b (see 'ChIC' header) \
 (4) go back to the transcriptome modality, filter out the QCfail cells and generate the UMAP using notebook 2c: '2c_TCHIC_PCA_to_UMAP'.
 
 ## ChIC modality
